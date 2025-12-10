@@ -1,11 +1,13 @@
+
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import MapZone, { type Zone } from './MapZone.vue'
 
 const router = useRouter()
 
-const zones = ref<Zone[]>([
+// Phase 1: Reactive State
+const zones = reactive<Zone[]>([
   { id: 1, name: 'Pueblo Paleta', status: 'available' },
   { id: 2, name: 'Ruta 1', status: 'locked' },
   { id: 3, name: 'Ciudad Verde', status: 'locked' },
@@ -13,21 +15,31 @@ const zones = ref<Zone[]>([
   { id: 5, name: 'Ciudad Plateada', status: 'locked' },
 ])
 
-const handleZoneClick = (id: number) => {
-  const zoneIndex = zones.value.findIndex(z => z.id === id)
-  const zone = zones.value[zoneIndex]
+const desbloquearZona = (index: number) => {
+  if (index >= 0 && index < zones.length) {
+    // Only unlock if it's currently locked
+    if (zones[index].status === 'locked') {
+      zones[index].status = 'available'
+    }
+  }
+}
 
-  // Allow navigation even if locked for testing (as requested)
-  // if (zone.status === 'locked') return
+const handleZoneClick = (id: number) => {
+  const zoneIndex = zones.findIndex(z => z.id === id)
+  const zone = zones[zoneIndex]
+
+  // Enforce Lock - The Boss "Caos de Estados" requires order!
+  if (zone.status === 'locked') {
+    alert("¡Zona Bloqueada! Debes completar la anterior primero.")
+    return
+  }
 
   router.push(`/zone/${id}`)
   
-  // Logic to unlock next upon 'completion' (simulated by entering for now)
+  // Logic to simulate unlocking the next zone upon entering/completing "Available" zone
   if (zone.status === 'available') {
     zone.status = 'completed'
-    if (zoneIndex + 1 < zones.value.length) {
-      zones.value[zoneIndex + 1].status = 'available'
-    }
+    desbloquearZona(zoneIndex + 1)
   }
 }
 </script>
@@ -35,11 +47,10 @@ const handleZoneClick = (id: number) => {
 <template>
   <div class="game-map-wrapper">
     <div class="game-map">
-      <h2 class="title">Mapa de Kanto</h2>
+      <h2 class="title">Mapa de Kanto - Reactivo</h2>
       <div class="path-container">
         <!-- SVG Connector Line -->
         <svg class="path-svg" viewBox="0 0 400 600" preserveAspectRatio="none">
-          <!-- A simple approximations of a winding path -->
           <path d="M200,550 C200,500 150,450 150,400 C150,350 250,300 250,250 C250,200 150,150 150,100" 
                 stroke="rgba(255, 255, 255, 0.3)" 
                 stroke-width="8" 
@@ -83,7 +94,6 @@ const handleZoneClick = (id: number) => {
 }
 
 .game-map::before {
-  /* Pattern Overlay */
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -126,6 +136,4 @@ const handleZoneClick = (id: number) => {
   position: relative;
   z-index: 1;
 }
-
-/* Optional: Custom positioning tweaks can be done via :style in template or specific classes here */
 </style>
